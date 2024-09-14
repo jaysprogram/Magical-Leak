@@ -82,6 +82,8 @@ int peek(Queue * q){
 int dx[4] = {0, 1, 0, -1};
 int dy[4] = {1, 0, -1 , 0};
 
+int main(){
+
 
 
 // Initialize
@@ -99,6 +101,7 @@ int dy[4] = {1, 0, -1 , 0};
 
 // Clean up the memory
 
+}
 
 
 
