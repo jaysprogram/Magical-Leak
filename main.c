@@ -3,8 +3,18 @@
 #include <stdbool.h>
 #include <string.h>
 
-// Make link list first
+long long regionSizesID[100];
 
+//Directions
+int dx[4] = {0, 1, 0, -1};
+int dy[4] = {1, 0, -1 , 0};
+
+//Array List 
+typedef struct Array{
+    int size;
+    int cap;
+    int * list;
+}Array;
 
 // Structure to represent a point in the map
 typedef struct {
@@ -101,7 +111,7 @@ void printMap(char ** map,int  row){
 
 
 void printVisited(int ** visited, int col, int row){
-    printf("\n================================\n");
+    printf("\n========Visited=========\n");
     for (int pointerIndex = 0; pointerIndex < row; pointerIndex++){
         for (int arrayIndx = 0; arrayIndx < col; arrayIndx++){ // selfexplanatory 
             printf("%d ", visited[pointerIndex][arrayIndx]);
@@ -110,7 +120,6 @@ void printVisited(int ** visited, int col, int row){
     }
 }
 
-//
 
 long long int floodSearch(char ** map,int **visited, int startX, int startY,int rows, int cols, int regionId){
     
@@ -122,12 +131,30 @@ long long int floodSearch(char ** map,int **visited, int startX, int startY,int 
 
     visited[p.x][p.y] = regionId; // set current starting point as visited
     long long int regionSize = 0;
+
+    //begin BFS search
+    while (!isEmpty(q)){
+        Point currPt = dequeue(q);
+        regionSize++; // while the queue is not empty continue
+
+        for (int i = 0; i < 4; i++){ // look at all 4 directions
+            int newX = currPt.x + dx[i];
+            int newY = currPt.y + dy[i];
+
+            if (newX > 0 && newX <= rows && newY < cols && newY > 0 &&
+             visited[newX][newY] == 0 && map[newX][newY] == '.'){
+                p.x = newX;
+                p.y = newY;
+                enqueue(q, p);
+                visited[newX][newY] = regionId;
+                
+            }
+
+        }
     
-
-
-    
-
-
+    }
+    freeQueue(q);
+    return regionSize;
 }
 
 
@@ -146,73 +173,71 @@ void input(int * row, int * col, char *** map){
     }
 }
 
-//Directions
-int dx[4] = {0, 1, 0, -1};
-int dy[4] = {1, 0, -1 , 0};
+long long int worstCase(char ** map , int row, int col, int ** visited, int * regionSizesID, int x, int y){
+    
+}
+
 
 int main(){
     int regionCounter = 1;
     int  row, col;
     char **map;
-    int **visited;
+    long long totalMagicLeak = 0;
+    long long maxMagic = 0;
+
 
     input(&row, &col, &map);
-    printMap(map, row);
-    int startCol = 0 , startRow = 0;
-    int endCol = col - 1;
-    int endRow = row - 1; 
+    printMap(map, row); 
 
     //visited array
+    int **visited;
     visited = (int **)malloc(sizeof(int*) * row); // allocate array of int pointers
     for( int i = 0; i < row; i++){
-        visited[i] = (int *)calloc(col, sizeof(int)); //array of pointers
+        visited[i] = (int *)calloc(col, sizeof(int)); //array of ints
     }
-    printVisited(visited, col, row);
 
     //iterate through each indices in map
     for (int pIndx = 0; pIndx < row; pIndx++){
         for (int arryIndx = 0; arryIndx < col; arryIndx++){
             if(map[pIndx][arryIndx] == '.' && !visited[pIndx][arryIndx]){ //check for a new region
                 long long int regionSize = floodSearch(map,visited,pIndx,arryIndx,row,col,regionCounter);
+                long long magicLeak = regionSize * (regionSize + 1) / 2;
+                regionSizesID[regionCounter] = magicLeak;
+                totalMagicLeak += magicLeak; 
                 regionCounter++;
-                printf("Found\n");
+                printf("size: %lld\n leak amount: %lld\n", regionSize, magicLeak);
+            }    
+        } 
+    }
+
+    if(totalMagicLeak == 0) //checks if there was no free points. EXTREME CASE
+        printf("0");
+        
+
+    // For loop for the failing point cases
+    for (int x = 0; x < row; x++ ){
+        for (int y = 0; y < col; y++){
+            if(map[x][y] == 'X'){
+            long long current = worstCase(map, row, col, visited, regionSizesID, x, y);
+            if(maxMagic < current)
+                maxMagic = current;
+                printf("%lld",maxMagic);
             }
         }
     }
-
-
-    
-
     // free all of map
     for (int i = 0; i < row; i++)
         free(map[i]);
     free(map);
 
     //free all of visited
+    printVisited(visited, col, row);
     for (int i = 0; i < row; i++)
         free(visited[i]);
     free(visited);
-    
-    
+
 
     return 0;
-
-
-
-    
-// Make a map
-
-// Flood loop
-
-// 3 checks
-    // bounds check
-    // wall check
-    // visited check
-
-// read out the results
-
-// Clean up the memory
-
 }
 
 
