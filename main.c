@@ -141,7 +141,7 @@ long long int floodSearch(char ** map,int **visited, int startX, int startY,int 
             int newX = currPt.x + dx[i];
             int newY = currPt.y + dy[i];
 
-            if (newX > 0 && newX <= rows && newY < cols && newY > 0 &&
+            if (newX >= 0 && newX < rows && newY < cols && newY >= 0 &&
              visited[newX][newY] == 0 && map[newX][newY] == '.'){
                 p.x = newX;
                 p.y = newY;
@@ -173,8 +173,63 @@ void input(int * row, int * col, char *** map){
     }
 }
 
-long long int worstCase(char ** map , int row, int col, int ** visited, int * regionSizesID, int x, int y){
-    
+long long worstCase(char ** map , int row, int col, int ** visited, long long int * regionSizesID, int x, int y, long long totalMagicLeak){ // calculate the worst or max amount of magic leak
+    int adjacentRegionsIds[4];
+    int numOfRegions = 0;
+
+    // look through all 4 directions
+    for ( int i = 0; i < 4; i++){
+        int newX = x + dx[i];
+        int newY = y + dy[i];
+
+        //check if in bounds
+        if (newX < row && newX >= 0 && newY < col && newY >= 0){
+            if(map[newX][newY] == '.'){
+                int regionId = visited[newX][newY];
+
+
+                //check if region was not check
+                bool isUnique = true;
+                for (int j = 0; j < numOfRegions; j++){
+                    if (regionId == adjacentRegionsIds[j]){
+                    isUnique = false;
+                    break;
+                    }
+                }
+                //if unique add to list
+                if(isUnique){
+                    adjacentRegionsIds[numOfRegions] = regionId;
+                    numOfRegions++;
+                }
+            }
+        }
+    }
+
+    //if there are no regions just add 1 to the total magic(x,y)
+    if(numOfRegions == 0){
+        return totalMagicLeak + 1;
+    }
+    else{//calculate the old magic leak of the region adjacent(s) regions
+        long long OldMagicLeak = 0;
+        long long totalSize = 0;
+        for (int i = 0; i < numOfRegions; i++){
+            int regionId = adjacentRegionsIds[i];
+            long long size = regionSizesID[regionId];
+            totalSize += size;
+            OldMagicLeak += size * (size + 1) / 2; 
+
+        }
+        // new region size after merging
+        long long newSize = totalSize + 1; //  include the X
+        long long newMagicalLeak = newSize * (newSize + 1) / 2;
+
+        // Calculate combine magical leak
+        long long newTotalMagicalLeak  = totalMagicLeak - OldMagicLeak + newMagicalLeak;
+
+        return newTotalMagicalLeak;
+
+
+    }
 }
 
 
@@ -183,7 +238,7 @@ int main(){
     int  row, col;
     char **map;
     long long totalMagicLeak = 0;
-    long long maxMagic = 0;
+    
 
 
     input(&row, &col, &map);
@@ -202,36 +257,38 @@ int main(){
             if(map[pIndx][arryIndx] == '.' && !visited[pIndx][arryIndx]){ //check for a new region
                 long long int regionSize = floodSearch(map,visited,pIndx,arryIndx,row,col,regionCounter);
                 long long magicLeak = regionSize * (regionSize + 1) / 2;
-                regionSizesID[regionCounter] = magicLeak;
+                regionSizesID[regionCounter] = regionSize;
                 totalMagicLeak += magicLeak; 
                 regionCounter++;
                 printf("size: %lld\n leak amount: %lld\n", regionSize, magicLeak);
             }    
         } 
     }
+    long long maxMagic = totalMagicLeak; // so now max magic is the initial  BFS search
 
-    if(totalMagicLeak == 0) //checks if there was no free points. EXTREME CASE
-        printf("0");
+    for (int i = 1; i < regionCounter; i++ )
+        printf("region size of %d: %lld\n", i, regionSizesID[i]);
         
-
     // For loop for the failing point cases
     for (int x = 0; x < row; x++ ){
         for (int y = 0; y < col; y++){
             if(map[x][y] == 'X'){
-            long long current = worstCase(map, row, col, visited, regionSizesID, x, y);
+            long long current = worstCase(map, row, col, visited, regionSizesID, x, y,totalMagicLeak);
             if(maxMagic < current)
                 maxMagic = current;
-                printf("%lld",maxMagic);
             }
         }
     }
+
+    printf("%lld\n",maxMagic);
+
     // free all of map
     for (int i = 0; i < row; i++)
         free(map[i]);
     free(map);
 
     //free all of visited
-    printVisited(visited, col, row);
+    //printVisited(visited, col, row);
     for (int i = 0; i < row; i++)
         free(visited[i]);
     free(visited);
@@ -239,15 +296,3 @@ int main(){
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
- 
-
