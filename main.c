@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-long long regionSizesID[100];
+ //long long regionSizesID[2000000];
 
 //Directions
 int dx[4] = {0, 1, 0, -1};
@@ -13,7 +13,7 @@ int dy[4] = {1, 0, -1 , 0};
 typedef struct Array{
     int size;
     int cap;
-    int * list;
+    long long * list;
 }Array;
 
 // Structure to represent a point in the map
@@ -101,7 +101,6 @@ void freeQueue(Queue *queue) {
 }
 
 
-
 // debug functions
 void printMap(char ** map,int  row){
     for (int i = 0; i < row; i++){
@@ -173,7 +172,7 @@ void input(int * row, int * col, char *** map){
     }
 }
 
-long long worstCase(char ** map , int row, int col, int ** visited, long long int * regionSizesID, int x, int y, long long totalMagicLeak){ // calculate the worst or max amount of magic leak
+long long worstCase(char ** map , int row, int col, int ** visited, long long * regionSizesID, int x, int y, long long totalMagicLeak){ // calculate the worst or max amount of magic leak
     int adjacentRegionsIds[4];
     int numOfRegions = 0;
 
@@ -238,11 +237,17 @@ int main(){
     int  row, col;
     char **map;
     long long totalMagicLeak = 0;
+
+    long long *regionSizesID = (long long *)malloc(2000000 * sizeof(long long));
+    if (regionSizesID == NULL) {
+    printf("Memory allocation at region sizes.\n");
+    return 1;  // Exit if allocation fails
+    }
     
 
 
     input(&row, &col, &map);
-    printMap(map, row); 
+    //printMap(map, row); 
 
     //visited array
     int **visited;
@@ -255,19 +260,19 @@ int main(){
     for (int pIndx = 0; pIndx < row; pIndx++){
         for (int arryIndx = 0; arryIndx < col; arryIndx++){
             if(map[pIndx][arryIndx] == '.' && !visited[pIndx][arryIndx]){ //check for a new region
-                long long int regionSize = floodSearch(map,visited,pIndx,arryIndx,row,col,regionCounter);
+                long long int regionSize =  floodSearch(map,visited,pIndx,arryIndx,row,col,regionCounter);
                 long long magicLeak = regionSize * (regionSize + 1) / 2;
                 regionSizesID[regionCounter] = regionSize;
                 totalMagicLeak += magicLeak; 
                 regionCounter++;
-                printf("size: %lld\n leak amount: %lld\n", regionSize, magicLeak);
+                //printf("size: %lld\n leak amount: %lld\n", regionSize, magicLeak);
             }    
         } 
     }
     long long maxMagic = totalMagicLeak; // so now max magic is the initial  BFS search
 
-    for (int i = 1; i < regionCounter; i++ )
-        printf("region size of %d: %lld\n", i, regionSizesID[i]);
+    //for (int i = 1; i < regionCounter; i++ )
+        //printf("region size of %d: %lld\n", i, regionSizesID[i]);
         
     // For loop for the failing point cases
     for (int x = 0; x < row; x++ ){
@@ -280,6 +285,7 @@ int main(){
         }
     }
 
+    //result
     printf("%lld\n",maxMagic);
 
     // free all of map
@@ -293,6 +299,7 @@ int main(){
         free(visited[i]);
     free(visited);
 
+    free(regionSizesID);
 
     return 0;
 }
